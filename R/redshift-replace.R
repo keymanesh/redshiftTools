@@ -34,7 +34,8 @@ rs_replace_table = function(
     bucket=Sys.getenv('AWS_BUCKET_NAME'),
     region=Sys.getenv('AWS_DEFAULT_REGION'),
     access_key=Sys.getenv('AWS_ACCESS_KEY_ID'),
-    secret_key=Sys.getenv('AWS_SECRET_ACCESS_KEY')
+    secret_key=Sys.getenv('AWS_SECRET_ACCESS_KEY'),
+    emptyasnull= TRUE
     )
   {
 
@@ -59,11 +60,12 @@ rs_replace_table = function(
       queryDo(dbcon, sprintf("delete from %s", tableName))
 
       print("Copying data from S3 into Redshift")
-      queryDo(dbcon, sprintf("copy %s from 's3://%s/%s.' region '%s' csv gzip ignoreheader 1 emptyasnull COMPUPDATE FALSE credentials 'aws_access_key_id=%s;aws_secret_access_key=%s';",
+      queryDo(dbcon, sprintf("copy %s from 's3://%s/%s.' region '%s' csv gzip ignoreheader 1 %s COMPUPDATE FALSE credentials 'aws_access_key_id=%s;aws_secret_access_key=%s';",
                           tableName,
                           bucket,
                           prefix,
                           region,
+                          ifelse(emptyasnull,'emptyasnull', ''),
                           access_key,
                           secret_key
               ))
