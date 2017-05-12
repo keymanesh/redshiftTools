@@ -11,6 +11,7 @@
 #' @param region the region of the bucket. Will look for AWS_DEFAULT_REGION on environment if not specified.
 #' @param access_key the access key with permissions for the bucket. Will look for AWS_ACCESS_KEY_ID on environment if not specified.
 #' @param secret_key the secret key with permissions fot the bucket. Will look for AWS_SECRET_ACCESS_KEY on environment if not specified.
+#' @param emptyasnull if TRUE it will convert empty field to null when loading data to redshift. Default value is TRUE.
 #' @examples
 #' library(DBI)
 #'

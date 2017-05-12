@@ -13,6 +13,7 @@
 #' @param region the region of the bucket. Will look for AWS_DEFAULT_REGION on environment if not specified.
 #' @param access_key the access key with permissions for the bucket. Will look for AWS_ACCESS_KEY_ID on environment if not specified.
 #' @param secret_key the secret key with permissions fot the bucket. Will look for AWS_SECRET_ACCESS_KEY on environment if not specified.
+#' @param emptyasnull if TRUE it will convert empty field to null when loading data to redshift. Default value is TRUE.
 #' @examples
 #' library(DBI)
 #'
@@ -40,7 +41,8 @@ rs_upsert_table = function(
     bucket=Sys.getenv('AWS_BUCKET_NAME'),
     region=Sys.getenv('AWS_DEFAULT_REGION'),
     access_key=Sys.getenv('AWS_ACCESS_KEY_ID'),
-    secret_key=Sys.getenv('AWS_SECRET_ACCESS_KEY')
+    secret_key=Sys.getenv('AWS_SECRET_ACCESS_KEY'),
+    emptyasnull= TRUE
     )
   {
 
@@ -65,11 +67,12 @@ rs_upsert_table = function(
     queryDo(dbcon, sprintf("create temp table %s (like %s)", stageTable, tableName))
 
     print("Copying data from S3 into Redshift")
-    queryDo(dbcon, sprintf("copy %s from 's3://%s/%s.' region '%s' csv gzip ignoreheader 1 emptyasnull COMPUPDATE FALSE credentials 'aws_access_key_id=%s;aws_secret_access_key=%s';",
+    queryDo(dbcon, sprintf("copy %s from 's3://%s/%s.' region '%s' csv gzip ignoreheader 1 %s COMPUPDATE FALSE credentials 'aws_access_key_id=%s;aws_secret_access_key=%s';",
                         stageTable,
                         bucket,
                         prefix,
                         region,
+                        ifelse(emptyasnull,'emptyasnull', ''),
                         access_key,
                         secret_key
             ))
