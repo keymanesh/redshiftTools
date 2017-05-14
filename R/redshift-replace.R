@@ -69,8 +69,8 @@ rs_replace_table = function(
                     region,
                     ifelse(emptyasnull,'emptyasnull', ''),
                     access_key,
-                    secret_key
-      ))
+                    secret_key)
+            )
       
      
       
