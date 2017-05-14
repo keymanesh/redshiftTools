@@ -14,6 +14,7 @@
 #' @param access_key the access key with permissions for the bucket. Will look for AWS_ACCESS_KEY_ID on environment if not specified.
 #' @param secret_key the secret key with permissions fot the bucket. Will look for AWS_SECRET_ACCESS_KEY on environment if not specified.
 #' @param emptyasnull if TRUE it will convert empty field to null when loading data to redshift. Default value is TRUE.
+#' @param verbose if TRUE it will return a message in additiona to binary result of the upsert query. Default value is FALSE.
 #' @examples
 #' library(DBI)
 #'
@@ -42,7 +43,8 @@ rs_upsert_table = function(
     region=Sys.getenv('AWS_DEFAULT_REGION'),
     access_key=Sys.getenv('AWS_ACCESS_KEY_ID'),
     secret_key=Sys.getenv('AWS_SECRET_ACCESS_KEY'),
-    emptyasnull= TRUE
+    emptyasnull= TRUE,
+    verbose= FALSE
     )
   {
 
@@ -60,7 +62,9 @@ rs_upsert_table = function(
 
   prefix = uploadToS3(data, bucket, split_files)
 
-
+  
+  result_message <- ""
+  
   result = tryCatch({
     stageTable=paste0(sample(letters,16),collapse = "")
 
@@ -92,17 +96,26 @@ rs_upsert_table = function(
     queryDo(dbcon, sprintf("drop table %s", stageTable))
     print("Commiting")
     queryDo(dbcon, "COMMIT;")
-    return(TRUE)
+    result_message <- ""
+    list(TRUE, result_message)
   }, warning = function(w) {
+      result_message <- paste0("WARNING: ", w)
       print(w)
+      return(list(FALSE, result_message))
   }, error = function(e) {
+      result_message <- paste0("ERROR: ", e$message)
       print(e$message)
       queryDo(dbcon, 'ROLLBACK;')
-      return(FALSE)
+      return(list(FALSE, result_message))
   }, finally = {
     print("Deleting temporary files from S3 bucket")
     deletePrefix(prefix, bucket, split_files)
   })
 
-  return (result)
+  if(verbose){
+    return (list(status=result[[1]], message=result[[2]]))
+  }else{
+    
+    return (result[[1]])
+  }
 }
